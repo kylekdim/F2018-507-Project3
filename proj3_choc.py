@@ -63,7 +63,9 @@ except:
     
 conn.commit()
 
-#================================
+# =======================================
+# -------- Create Countries Table -------
+# =======================================
 
 statement = '''
         CREATE TABLE 'Countries' (
@@ -77,11 +79,11 @@ statement = '''
             'Area' REAL
         );
     '''
-    try:
-        cur.execute(statement)
-    except:
-        print("Failure. Please try again.")
-    conn.commit()
+try:
+    cur.execute(statement)
+except:
+    print("Table creation failed at 'Countries'. Please try again.")
+conn.commit()
 
 #=================================
 
