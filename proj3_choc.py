@@ -14,32 +14,27 @@ DBNAME = 'choc.db'
 BARSCSV = 'flavors_of_cacao_cleaned.csv'
 COUNTRIESJSON = 'countries.json'
 
-    try:
-        conn = sqlite3.connect(DBNAME)
-        cur = conn.cursor()
-    except:
-        print("error msg")
+try:
+    conn = sqlite3.connect(DBNAME)
+    cur = conn.cursor()
+except:
+    print("error msg")
 
-        #drop tables like hw10
+#drop tables like hw10
 
-        cur.execute(statement)
-    conn.commit()
+cur.execute(statement)
+conn.commit()
 
-    statement = '''
-        DROP TABLE IF EXISTS 'Teams';
-    '''
-    cur.execute(statement)
+statement = '''
+    DROP TABLE IF EXISTS 'Bars';
+'''
+cur.execute(statement)
 
-    statement = '''
-        DROP TABLE IF EXISTS 'Games';
-    '''
-    cur.execute(statement)
-
-    statement = '''
-        DROP TABLE IF EXISTS 'Rounds';
-    '''
-    cur.execute(statement)
-    conn.commit()
+statement = '''
+    DROP TABLE IF EXISTS 'Countries';
+'''
+cur.execute(statement)
+conn.commit()
     
     # Create 'Teams' Table
     statement = '''
