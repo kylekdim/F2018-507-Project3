@@ -36,20 +36,35 @@ statement = '''
 cur.execute(statement)
 conn.commit()
     
-    # Create 'Teams' Table
-    statement = '''
-        CREATE TABLE 'Teams' (
-            'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
-            'Seed' INTEGER NOT NULL,
-            'Name' TEXT NOT NULL,
-            'ConfRecord' TEXT NOT NULL
+# ==================================
+# -------- Create Bars Table -------
+# ==================================
+
+statement = '''
+    CREATE TABLE 'Bars' (
+        'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
+        'Company' TEXT NOT NULL,
+        'SpecificBeanBarName' TEXT NOT NULL,
+        'REF' TEXT,
+        'ReviewDate' TEXT,
+        'CocoaPercent' REAL,
+        'CompanyLocation' TEXT,
+        'CompanyLocationId' INTEGER,
+        'Rating' REAL,
+        'BeanType' TEXT,
+        'BroadBeanOrigin' TEXT,
+        'BroadBeanOriginId' INTEGER
         );
     '''
-    try:
-        cur.execute(statement)
-    except:
-        print("Creation of Database Failed with 'Teams'. Please try again.")
-    conn.commit()
+try:
+    cur.execute(statement)
+except:
+    print("Table creation failed at 'Bars'. Please try again.")
+    
+conn.commit()
+
+#=========================================
+
 
     # Create 'Games' Table
     statement = '''
