@@ -18,7 +18,7 @@ try:
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
 except:
-    print("error msg")
+    print("Database creation failed at startup. Please try again.")
 
 #drop tables like hw10
 
@@ -63,41 +63,29 @@ except:
     
 conn.commit()
 
-#=========================================
+#================================
 
-
-    # Create 'Games' Table
-    statement = '''
-        CREATE TABLE 'Games' (
+statement = '''
+        CREATE TABLE 'Countries' (
             'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
-            'Winner' INTEGER NOT NULL,
-            'Loser' INTEGER NOT NULL,
-            'WinnerScore' INTEGER NOT NULL,
-            'LoserScore' INTEGER NOT NULL,
-            'Round' INTEGER NOT NULL,
-            'Time' TEXT NOT NULL
+            'Alpha2' TEXT,
+            'Alpha3' TEXT,
+            'EnglishName' TEXT,
+            'Region' TEXT,
+            'Subregion' TEXT,
+            'Population' INTEGER,
+            'Area' REAL
         );
     '''
     try:
         cur.execute(statement)
     except:
-        print("Creation of Database Failed with 'Games'. Please try again.")
+        print("Failure. Please try again.")
     conn.commit()
 
-    # Create 'Rounds' Table
-    statement = '''
-        CREATE TABLE 'Rounds' (
-            'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
-            'Name' TEXT NOT NULL,
-            'Date' TEXT  NOT NULL
-        );
-    '''
-    try:
-        cur.execute(statement)
-    except:
-        print("Creation of Database Failed with 'Rounds'. Please try again.")
-    conn.commit()
-    conn.close()
+#=================================
+
+
 
 def populate_tournament_db():
 
