@@ -149,6 +149,23 @@ conn.commit()
         conn.commit()
 
 
+#====================================
+#----- Update Tables----------------
+#====================================
+
+#sql for adding info to new columns
+
+add_CompanyLocationId = '''
+    UPDATE Bars
+    SET (CompanyLocationId) = (SELECT c.ID FROM Countries c WHERE Bars.CompanyLocation = c.EnglishName)
+'''
+
+add_BroadBeanOriginId = '''
+    UPDATE Bars
+    SET (BroadBeanOriginId) = (SELECT c.ID FROM Countries c WHERE Bars.BroadBeanOrigin = c.EnglishName)
+'''
+
+
 # Part 2: Implement logic to process user commands
 def process_command(command):
     return []
