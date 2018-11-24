@@ -20,11 +20,6 @@ try:
 except:
     print("Database creation failed at startup. Please try again.")
 
-#drop tables like hw10
-
-cur.execute(statement)
-conn.commit()
-
 statement = '''
     DROP TABLE IF EXISTS 'Bars';
 '''
@@ -48,7 +43,6 @@ statement = '''
         'REF' TEXT,
         'ReviewDate' TEXT,
         'CocoaPercent' REAL,
-        'CompanyLocation' TEXT,
         'CompanyLocationId' INTEGER,
         'Rating' REAL,
         'BeanType' TEXT,
@@ -87,74 +81,40 @@ conn.commit()
 
 #=================================
 
+# extra big 10 stuff for ref
 
-
-def populate_tournament_db():
+#def populate_tournament_db():
 
     # Connect to big10 database
-    conn = sqlite.connect('changkyle_big10.sqlite')
-    cur = conn.cursor()
-
+    #conn = sqlite.connect('changkyle_big10.sqlite')
+    #cur = conn.cursor()
     
-
-    # Your code goes here
-    # HINTS:
-    # Column order in teams.csv file: Seed,Name,ConfRecord
-    # Column order in games.csv file: Winner,Loser,WinnerScore,LoserScore,Round,Time
-    # Column order in rounds.csv file: Name,Date
+    with open("teams.csv", 'r') as csv_file_t:  
     
-    # read data from Teams.csv
-    with open("teams.csv", 'r') as csv_file_t:
-        csv_teams = csv.reader(csv_file_t)
+    with open("flavors_of_cacao_cleaned.csv", 'r') as csv_file_c:
+        csv_data = csv.reader(csv_file_c)
 
-        for row in csv_teams:
-            (Seed, Name, ConfRecord) = row
+        for row in csv_data:
+            (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) = row
 
-            insert_statement = '''
-                INSERT INTO Teams(Seed, Name, ConfRecord) VALUES (?, ?, ?);
-            '''
-            # execute + commit
-            cur.execute(insert_statement, [Seed, Name, ConfRecord])
-            conn.commit()
+            CocoaPercent = float(CocoaPercent.strip('%'))
 
-
-    # read data from Games.csv
-    with open("games.csv", 'r') as csv_file_g:
-        csv_games = csv.reader(csv_file_g)
-
-        for row in csv_games:
-            (Winner, Loser, WinnerScore, LoserScore, Round, Time) = row
+            try:
+                conn = sqlite3.connect(DBNAME)
+                cur = conn.cursor()
+            except:
+                print("Failure. Please try again.")
 
             insert_statement = '''
-                INSERT INTO Games(Winner, Loser, WinnerScore, LoserScore, Round, Time) VALUES (?, ?, ?, ?, ?, ?);
+                INSERT INTO Bars(Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
             '''
-            # execute + commit
-            cur.execute(insert_statement, [Winner, Loser, WinnerScore, LoserScore, Round, Time])
+
+            # execute and commit
+            cur.execute(insert_statement, [Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin])
             conn.commit()
-
-    # read data from Rounds.csv
-    with open("rounds.csv", 'r') as csv_file_r:
-        csv_rounds = csv.reader(csv_file_r)
-
-        for row in csv_rounds:
-            (Name, Date) = row
-
-            insert_statement = '''
-                INSERT INTO Rounds(Name, Date) VALUES (?, ?);
-            '''
-            # execute + commit
-            cur.execute(insert_statement, [Name, Date])
-            conn.commit()
-
     # Close connection
     conn.commit()
     conn.close()
-
-if __name__ == "__main__":
-    create_tournament_db()
-    print("Created big10 Database")
-    populate_tournament_db()
-    print("Populated big10 Database")
 
 
 # Part 2: Implement logic to process user commands
