@@ -117,6 +117,38 @@ conn.commit()
     conn.close()
 
 
+#===========================================
+#------------ Load Json Data ---------------
+#===========================================
+
+    json_file = open(FILENAME, 'r')
+    json_content = json_file.read()
+    json_data = json.loads(json_content)
+
+    try:
+        conn = sqlite3.connect(DBNAME)
+        cur = conn.cursor()
+    except:
+        print("Failure. Please try again.")
+
+    for row in json_data:
+        Alpha2 = row["alpha2Code"]
+        Alpha3 = row["alpha3Code"]
+        EnglishName = row["name"]
+        Region = row["region"]
+        Subregion = row["subregion"]
+        Population = row["population"]
+        Area = row["area"]
+
+        insert_statement = '''
+            INSERT INTO Countries(Alpha2, Alpha3, EnglishName, Region, Subregion, Population, Area) VALUES (?, ?, ?, ?, ?, ?, ?);
+        '''
+
+        # execute + commit
+        cur.execute(insert_statement, [Alpha2, Alpha3, EnglishName, Region, Subregion, Population, Area])
+        conn.commit()
+
+
 # Part 2: Implement logic to process user commands
 def process_command(command):
     return []
