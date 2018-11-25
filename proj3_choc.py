@@ -43,6 +43,7 @@ statement = '''
         'REF' TEXT,
         'ReviewDate' TEXT,
         'CocoaPercent' REAL,
+        'CompanyLocation' TEXT,
         'CompanyLocationId' INTEGER,
         'Rating' REAL,
         'BeanType' TEXT,
@@ -89,29 +90,29 @@ conn.commit()
     #conn = sqlite.connect('changkyle_big10.sqlite')
     #cur = conn.cursor()
     
-    with open("teams.csv", 'r') as csv_file_t:  
+#with open("teams.csv", 'r') as csv_file_t:  
     
-    with open("flavors_of_cacao_cleaned.csv", 'r') as csv_file_c:
-        csv_data = csv.reader(csv_file_c)
+with open("flavors_of_cacao_cleaned.csv", 'r') as csv_file_c:
+    csv_data = csv.reader(csv_file_c)
 
-        for row in csv_data:
-            (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) = row
+    for row in csv_data:
+        (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) = row
 
-            CocoaPercent = float(CocoaPercent.strip('%'))
+        CocoaPercent = float(CocoaPercent.strip('%'))
 
-            try:
-                conn = sqlite3.connect(DBNAME)
-                cur = conn.cursor()
-            except:
-                print("Failure. Please try again.")
+        try:
+            conn = sqlite3.connect(DBNAME)
+            cur = conn.cursor()
+        except:
+            print("Failure. Please try again.")
 
-            insert_statement = '''
-                INSERT INTO Bars(Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-            '''
+        insert_statement = '''
+            INSERT INTO Bars(Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        '''
 
-            # execute and commit
-            cur.execute(insert_statement, [Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin])
-            conn.commit()
+        # execute and commit
+        cur.execute(insert_statement, [Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin])
+        conn.commit()
     # Close connection
     conn.commit()
     conn.close()
@@ -121,32 +122,32 @@ conn.commit()
 #------------ Load Json Data ---------------
 #===========================================
 
-    json_file = open(FILENAME, 'r')
-    json_content = json_file.read()
-    json_data = json.loads(json_content)
+json_file = open(FILENAME, 'r')
+json_content = json_file.read()
+json_data = json.loads(json_content)
 
-    try:
-        conn = sqlite3.connect(DBNAME)
-        cur = conn.cursor()
-    except:
-        print("Failure. Please try again.")
+try:
+    conn = sqlite3.connect(DBNAME)
+    cur = conn.cursor()
+except:
+    print("Failure. Please try again.")
 
-    for row in json_data:
-        Alpha2 = row["alpha2Code"]
-        Alpha3 = row["alpha3Code"]
-        EnglishName = row["name"]
-        Region = row["region"]
-        Subregion = row["subregion"]
-        Population = row["population"]
-        Area = row["area"]
+for row in json_data:
+    Alpha2 = row["alpha2Code"]
+    Alpha3 = row["alpha3Code"]
+    EnglishName = row["name"]
+    Region = row["region"]
+    Subregion = row["subregion"]
+    Population = row["population"]
+    Area = row["area"]
 
-        insert_statement = '''
-            INSERT INTO Countries(Alpha2, Alpha3, EnglishName, Region, Subregion, Population, Area) VALUES (?, ?, ?, ?, ?, ?, ?);
-        '''
+    insert_statement = '''
+        INSERT INTO Countries(Alpha2, Alpha3, EnglishName, Region, Subregion, Population, Area) VALUES (?, ?, ?, ?, ?, ?, ?);
+    '''
 
-        # execute + commit
-        cur.execute(insert_statement, [Alpha2, Alpha3, EnglishName, Region, Subregion, Population, Area])
-        conn.commit()
+    # execute + commit
+    cur.execute(insert_statement, [Alpha2, Alpha3, EnglishName, Region, Subregion, Population, Area])
+    conn.commit()
 
 
 #====================================
