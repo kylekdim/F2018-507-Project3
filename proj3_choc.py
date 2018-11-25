@@ -166,7 +166,7 @@ add_BroadBeanOriginId = '''
 '''
 
 
-Queries
+#Queries
 
 # Part 2: Implement logic to process user commands
 # To prepare for supporting interactive queries, in part 2 you will implement a function “process_command” that takes a command string and returns a list of tuples representing records that match the query.
@@ -214,6 +214,25 @@ Description: Specifies whether to sort by rating, cocoa percentage, or the numbe
 top=<limit> | bottom=<limit> [default: top=10]
 Description: Specifies whether to list the top <limit> matches or the bottom <limit> matches. 
 """
+def bars_query():
+
+    conn = sqlite3.connect(DBNAME)
+    cur = conn.cursor()
+
+def companies_query():
+
+    conn = sqlite3.connect(DBNAME)
+    cur = conn.cursor()
+
+def countries_query():
+
+    conn = sqlite3.connect(DBNAME)
+    cur = conn.cursor()
+
+def regions_query():
+
+    conn = sqlite3.connect(DBNAME)
+    cur = conn.cursor()
 
 def process_command(command):
     return []
