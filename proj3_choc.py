@@ -92,13 +92,17 @@ conn.commit()
     
 #with open("teams.csv", 'r') as csv_file_t:  
     
-with open("flavors_of_cacao_cleaned.csv", 'r') as csv_file_c:
-    csv_data = csv.reader(csv_file_c)
+with open(BARSCSV, 'r') as csv_file_b:
+    csv_data = csv.reader(csv_file_b)
+
+    next(csv_data) #added this command to skip first line of headers in CSV file
 
     for row in csv_data:
         (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) = row
 
-        CocoaPercent = float(CocoaPercent.strip('%'))
+        #CocoaPercent = float(CocoaPercent.strip('%'))
+        CocoaPercent = CocoaPercent.strip('%')
+        CocoaPercent = float(CocoaPercent)
 
         try:
             conn = sqlite3.connect(DBNAME)
@@ -122,7 +126,7 @@ with open("flavors_of_cacao_cleaned.csv", 'r') as csv_file_c:
 #------------ Load Json Data ---------------
 #===========================================
 
-json_file = open(FILENAME, 'r')
+json_file = open(COUNTRIESJSON, 'r')
 json_content = json_file.read()
 json_data = json.loads(json_content)
 
