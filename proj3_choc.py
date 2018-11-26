@@ -223,10 +223,56 @@ Description: Specifies whether to sort by rating, cocoa percentage, or the numbe
 top=<limit> | bottom=<limit> [default: top=10]
 Description: Specifies whether to list the top <limit> matches or the bottom <limit> matches. 
 """
-def bars_query():
+def bars_query(specification="", keyword="", criteria="ratings", sorting_order="top", limit="10"):
 
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
+
+    if "c1" in specification:
+        statement = "SELECT SpecificBeanBarName, Company, CompanyLocation, Rating, CocoaPercent, BroadBeanOrigin "
+        statement += "FROM Bars "
+        statement += "JOIN Countries AS c1 ON Bars.CompanyLocationId = c1.Id "
+    elif "c2" in specification:
+        statement = "SELECT SpecificBeanBarName, Company, CompanyLocation, Rating, CocoaPercent, BroadBeanOrigin "
+        statement += "FROM Bars "
+        statement += "JOIN Countries AS c2 ON Bars.BroadBeanOriginId = c2.Id "
+    else:
+        statement = "SELECT SpecificBeanBarName, Company, CompanyLocation, Rating, CocoaPercent, BroadBeanOrigin "
+        statement += "FROM Bars "
+
+    # specification
+    if specification != "":
+        if "Alpha2" in specification:
+            keyword = keyword.upper()
+        try:
+            statement += "WHERE {} = '{}' ".format(specification , keyword)
+        except:
+            print("Failure. Please try again.")
+
+    # ratings / cocoa
+    if criteria == "ratings":
+        statement += "ORDER BY Rating"
+    elif criteria == "cocoa":
+        statement += "ORDER BY CocoaPercent"
+
+    # top: DESC / bottom ASC
+    if sorting_order == "top":
+        statement += "DESC "
+    elif sorting_order == "bottom":
+        statement += "ASC "
+
+    # limit
+    statement += "LIMIT {}".format(limit) #list the top <limit> matches or the bottom <limit> matches.
+
+    # excute the statement
+    # print(statement)
+    results = []
+    rows = cur.execute(statement).fetchall()
+    for row in rows:
+        results.append(row)
+    conn.commit()
+
+    return results
 
 def companies_query():
 
@@ -244,7 +290,37 @@ def regions_query():
     cur = conn.cursor()
 
 def process_command(command):
-    return []
+    command_list = command.split
+    command_query = command_list[0]
+    params = command_list[1:]
+
+
+
+    params_dic = {
+        "specification":"",
+        "keyword":"",
+        "criteria":"ratings",
+        "sort":"top",
+        "limit":"10",
+        "seller":"sellers"
+    }
+
+
+    if main_command == "bars":
+        return bars_query(params_dic)
+
+    elif main_command == "companies":
+        return companies_query(params_dic)
+
+    elif main_command == "countries":
+        return countries_query(params_dic)
+
+    elif main_command == "regions": 
+        return regions_query(params_dic)
+
+    else:
+        print("Invalid command.")
+
 
 
 def load_help_text():
@@ -261,6 +337,18 @@ def interactive_prompt():
         if response == 'help':
             print(help_text)
             continue
+
+        if response == 'exit':
+            print("Goodbye!")
+        
+        else:
+            try:
+                print("Command IS understood")
+                process_command(response)
+            except:
+                print("Command not understood")
+                continue
+
 
 # Make sure nothing runs or prints out when this file is run as a module
 if __name__=="__main__":
