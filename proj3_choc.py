@@ -100,9 +100,7 @@ with open(BARSCSV, 'r') as csv_file_b:
     for row in csv_data:
         (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) = row
 
-        #CocoaPercent = float(CocoaPercent.strip('%'))
-        CocoaPercent = CocoaPercent.strip('%')
-        CocoaPercent = float(CocoaPercent)
+        CocoaPercent = float(CocoaPercent.strip('%'))
 
         try:
             conn = sqlite3.connect(DBNAME)
@@ -290,32 +288,80 @@ def regions_query():
     cur = conn.cursor()
 
 def process_command(command):
-    command_list = command.split
-    command_query = command_list[0]
-    params = command_list[1:]
+    command_list = command.split #split command into a list of words
+    command_query = command_list[0] #split main query from rest of command
+    command_params = command_list[1:] #split parameters from command
 
+    valid_query = True
 
-
+    #dictionary of possible valid params in query
     params_dic = {
         "specification":"",
         "keyword":"",
         "criteria":"ratings",
         "sort":"top",
         "limit":"10",
-        "seller":"sellers"
+        "sellers_or_sources":"sellers"
     }
 
+    #search the list of params after the first command word
+    for param in command_params: 
 
-    if main_command == "bars":
-        return bars_query(params_dic)
+        #set the criteria parameter if present
+        elif param in ["cocoa", "ratings", "bars_sold"]:
+            params_dic["criteria"] = param
 
-    elif main_command == "companies":
+        # set the seller/sources parameter
+        elif param in ["sellers", "sources"]:
+            params_dic["sellers_or_sources"] = param
+        
+        # look for parameters that use "=" assignment
+        elif "=" in param:
+            param_equal_list = param.split("=")
+            
+            #for each word in the parameter with "="
+            for word in param_equal_list:
+
+                # top/bottom & limit
+                if word in ["top", "bottom"]:
+                    params_dic["sorting_order"] = param_equal_list[0]
+                    params_dic["limit"] = param_equal_list[1] 
+
+                # set geographic specs
+                elif word in ["sellcountry", "sourcecountry", "sellregion", "sourceregion", "country", "region", "sellers", "sources"]:
+                    if param_equal_list[0] == "sellcountry":
+                        params_dic["specification"] = "c1.Alpha2"
+                    elif param_equal_list[0] == "sourcecountry":
+                        params_dic["specification"] = "c2.Alpha2"
+                    elif param_equal_list[0] == "sellregion":
+                        params_dic["specification"] = "c1.Region"
+                    elif param_equal_list[0] == "sourceregion":
+                        params_dic["specification"] = "c2.Region"
+                    elif param_equal_list[0] == "country":
+                        params_dic["specification"] = "Alpha2"
+                    else:
+                        params_dic["specification"] = lst[0].title()
+
+                    # set the second word to the keyword
+                    params_dic["keyword"] = lst[1].title()
+        else:
+            valid_query = False
+
+    if valid_query == False:
+        print("Command not recognized: ", command)
+
+
+    if command_query == "bars":
+        return bars_query(params_dic["specification"], params_dic["keyword"], params_dic["criteria"], params_dic["sorting_order"], params_dic["limit"])
+
+
+    elif command_query == "companies":
         return companies_query(params_dic)
 
-    elif main_command == "countries":
+    elif command_query == "countries":
         return countries_query(params_dic)
 
-    elif main_command == "regions": 
+    elif command_query == "regions": 
         return regions_query(params_dic)
 
     else:
@@ -344,7 +390,8 @@ def interactive_prompt():
         else:
             try:
                 print("Command IS understood")
-                process_command(response)
+                result = process_command(response)
+                print(result)
             except:
                 print("Command not understood")
                 continue
