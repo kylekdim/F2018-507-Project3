@@ -165,11 +165,15 @@ add_CompanyLocationId = '''
     SET (CompanyLocationId) = (SELECT c.ID FROM Countries c WHERE Bars.CompanyLocation = c.EnglishName)
 '''
 
+cur.execute(add_CompanyLocationId)
+
 add_BroadBeanOriginId = '''
     UPDATE Bars
     SET (BroadBeanOriginId) = (SELECT c.ID FROM Countries c WHERE Bars.BroadBeanOrigin = c.EnglishName)
 '''
 
+cur.execute(add_BroadBeanOriginId)
+conn.commit()
 
 #Queries
 
