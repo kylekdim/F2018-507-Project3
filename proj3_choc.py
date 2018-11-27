@@ -322,9 +322,59 @@ def companies_query(specification="", keyword="", criteria="ratings", sort="top"
 
     return results
 
-def countries_query():
+def countries_query(specification="", keyword="", criteria="ratings", sort="top", limit="10", sellers_or_sources="sellers"):
+    
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
+
+    statement = "SELECT EnglishName, Region, "
+
+    if criteria == "ratings":
+        statement += "AVG(Rating) "
+    elif criteria == "cocoa":
+        statement += "AVG(CocoaPercent) "
+    elif criteria == "bars_sold":
+        statement += "COUNT(SpecificBeanBarName) "
+
+    statement += "FROM Countries "
+
+    if sellers_or_sources == "sellers":
+        statement += "JOIN Bars ON Countries.Id = Bars.CompanyLocationId "
+    elif sellers_or_sources == "sources":
+        statement += "JOIN Bars ON Countries.Id = Bars.BroadBeanOriginId "
+
+    statement += "GROUP BY EnglishName "
+    statement += "HAVING COUNT(SpecificBeanBarName) > 4 "
+
+    if specification != "":
+        if "Region" in specification:
+            keyword = keyword.title()
+        try:
+            statement += "AND {} = '{}' ".format(specification , keyword)
+        except:
+            print("Failure. Please try again.")
+
+    if criteria == "ratings":
+        statement += "ORDER BY AVG(Rating) "
+    elif criteria == "cocoa":
+        statement += "ORDER BY AVG(CocoaPercent) "
+    elif criteria == "bars_sold":
+        statement += "ORDER BY COUNT(SpecificBeanBarName) "
+
+    if sort == "top":
+        statement += "DESC "
+    elif sort == "bottom":
+        statement += "ASC "
+
+    statement += "LIMIT {}".format(limit) 
+
+    results = []
+    rows = cur.execute(statement).fetchall()
+    for row in rows:
+        results.append(row)
+    conn.commit()
+
+    return results
 
 
 def regions_query():
@@ -440,7 +490,20 @@ def process_command(command):
         return results
 
     elif command_query == "countries" and valid_query == True:
-        return countries_query(params_dic)
+        results = countries_query(params_dic["specification"], params_dic["keyword"], params_dic["criteria"], params_dic["sort"], params_dic["limit"], params_dic["sellers_or_sources"])
+
+        print_spacing = "{0:20} {1:20} {2:20}"
+        for row in results:
+            (company, company_location, agg) = row
+
+            if params_dic["criteria"] == "ratings":
+                agg = clean_decimal_fix(agg)
+            elif params_dic["criteria"] == "cocoa":
+                agg = clean_decimal_fix(agg)
+
+            print(template.format(str_output(company), str_output(region), agg))
+
+        return results
 
     elif command_query == "regions" and valid_query == True:
         return regions_query(params_dic)
