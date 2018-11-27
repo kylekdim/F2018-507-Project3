@@ -2,8 +2,6 @@ import sqlite3
 import csv
 import json
 
-# want to test my commit here
-
 # proj3_choc.py
 # You can change anything in this file you want as long as you pass the tests
 # and meet the project requirements! You will need to implement several new
@@ -81,16 +79,8 @@ except:
 conn.commit()
 
 #=================================
-
-# extra big 10 stuff for ref
-
-#def populate_tournament_db():
-
-    # Connect to big10 database
-    #conn = sqlite.connect('changkyle_big10.sqlite')
-    #cur = conn.cursor()
-    
-#with open("teams.csv", 'r') as csv_file_t:  
+#------- Load CSV data -----------
+#================================= 
     
 with open(BARSCSV, 'r') as csv_file_b:
     csv_data = csv.reader(csv_file_b)
@@ -112,11 +102,11 @@ with open(BARSCSV, 'r') as csv_file_b:
             INSERT INTO Bars(Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
 
-        # execute and commit
+        # execute + commit
         cur.execute(insert_statement, [Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocation, Rating, BeanType, BroadBeanOrigin])
         conn.commit()
-    # Close connection
-    conn.commit()
+
+    # close connection
     conn.close()
 
 
@@ -247,13 +237,13 @@ def bars_query(specification="", keyword="", criteria="ratings", sorting_order="
         except:
             print("Failure. Please try again.")
 
-    # ratings / cocoa
+    # ORDER BY ratings / cocoa
     if criteria == "ratings":
-        statement += "ORDER BY Rating"
+        statement += "ORDER BY Rating "
     elif criteria == "cocoa":
-        statement += "ORDER BY CocoaPercent"
+        statement += "ORDER BY CocoaPercent "
 
-    # top: DESC / bottom ASC
+    # ORDER BY top DESC / bottom ASC
     if sorting_order == "top":
         statement += "DESC "
     elif sorting_order == "bottom":
@@ -287,10 +277,14 @@ def regions_query():
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
 
+
 def process_command(command):
-    command_list = command.split #split command into a list of words
+    command_list = command.split() #split command into a list of words
+    #print(command_list)
     command_query = command_list[0] #split main query from rest of command
+    #print(command_query)
     command_params = command_list[1:] #split parameters from command
+    #print(command_params)
 
     valid_query = True
 
@@ -304,64 +298,77 @@ def process_command(command):
         "sellers_or_sources":"sellers"
     }
 
-    #search the list of params after the first command word
-    for param in command_params: 
+    if command_query in ["bars", "companies", "countries", "regions"]:
 
-        #set the criteria parameter if present
-        elif param in ["cocoa", "ratings", "bars_sold"]:
-            params_dic["criteria"] = param
+        if command_params == True: #search the list of params after the first command query word
+            for param in command_params: 
 
-        # set the seller/sources parameter
-        elif param in ["sellers", "sources"]:
-            params_dic["sellers_or_sources"] = param
+                #set the criteria parameter if present
+                if param in ["cocoa", "ratings", "bars_sold"]:
+                    params_dic["criteria"] = param
+
+                # set the seller/sources parameter
+                elif param in ["sellers", "sources"]:
+                    params_dic["sellers_or_sources"] = param
         
-        # look for parameters that use "=" assignment
-        elif "=" in param:
-            param_equal_list = param.split("=")
+                # look for parameters that use "=" assignment
+                elif "=" in param:
+                    param_equal_list = param.split("=")
             
-            #for each word in the parameter with "="
-            for word in param_equal_list:
+                    #for each word in the parameter with "="
+                    for word in param_equal_list:
 
-                # top/bottom & limit
-                if word in ["top", "bottom"]:
-                    params_dic["sorting_order"] = param_equal_list[0]
-                    params_dic["limit"] = param_equal_list[1] 
+                        # top/bottom & limit
+                        if word in ["top", "bottom"]:
+                            params_dic["sorting_order"] = param_equal_list[0]
+                            params_dic["limit"] = param_equal_list[1] 
 
-                # set geographic specs
-                elif word in ["sellcountry", "sourcecountry", "sellregion", "sourceregion", "country", "region", "sellers", "sources"]:
-                    if param_equal_list[0] == "sellcountry":
-                        params_dic["specification"] = "c1.Alpha2"
-                    elif param_equal_list[0] == "sourcecountry":
-                        params_dic["specification"] = "c2.Alpha2"
-                    elif param_equal_list[0] == "sellregion":
-                        params_dic["specification"] = "c1.Region"
-                    elif param_equal_list[0] == "sourceregion":
-                        params_dic["specification"] = "c2.Region"
-                    elif param_equal_list[0] == "country":
-                        params_dic["specification"] = "Alpha2"
-                    else:
-                        params_dic["specification"] = lst[0].title()
+                        # set geographic specs
+                        elif word in ["sellcountry", "sourcecountry", "sellregion", "sourceregion", "country", "region", "sellers", "sources"]:
+                            if param_equal_list[0] == "sellcountry":
+                                params_dic["specification"] = "c1.Alpha2"
+                            elif param_equal_list[0] == "sourcecountry":
+                                params_dic["specification"] = "c2.Alpha2"
+                            elif param_equal_list[0] == "sellregion":
+                                params_dic["specification"] = "c1.Region"
+                            elif param_equal_list[0] == "sourceregion":
+                                params_dic["specification"] = "c2.Region"
+                            elif param_equal_list[0] == "country":
+                                params_dic["specification"] = "Alpha2"
+                            else:
+                                params_dic["specification"] = param_equal_list[0].title()
 
-                    # set the second word to the keyword
-                    params_dic["keyword"] = lst[1].title()
-        else:
-            valid_query = False
+                        # set the second word after "=" to the keyword
+                        params_dic["keyword"] = param_equal_list[1].title()
+                else:
+                    valid_query = False #if there were params but encountered one, not valid
+
+    else:
+        valid_query = False #if the first word was not one of the main commands
 
     if valid_query == False:
-        print("Command not recognized: ", command)
+        print("Command not recognized: ", command, ". Please try again") #error message, 
+
+    results=[]
 
 
-    if command_query == "bars":
-        return bars_query(params_dic["specification"], params_dic["keyword"], params_dic["criteria"], params_dic["sorting_order"], params_dic["limit"])
+    if command_query == "bars" and valid_query == True:
+        results = bars_query(params_dic["specification"], params_dic["keyword"], params_dic["criteria"], params_dic["sort"], params_dic["limit"])
+                
+        for row in results:
+            (specific_bean_bar_name, company, company_location, rating, cocoa_percent, broad_bean_origin) = row #create results tuple for bars
+            print(row)
+        
+        return results
 
 
-    elif command_query == "companies":
+    elif command_query == "companies" and valid_query == True:
         return companies_query(params_dic)
 
-    elif command_query == "countries":
+    elif command_query == "countries" and valid_query == True:
         return countries_query(params_dic)
 
-    elif command_query == "regions": 
+    elif command_query == "regions" and valid_query == True:
         return regions_query(params_dic)
 
     else:
@@ -377,6 +384,7 @@ def load_help_text():
 def interactive_prompt():
     help_text = load_help_text()
     response = ''
+    
     while response != 'exit':
         response = input('Enter a command: ')
 
@@ -384,19 +392,23 @@ def interactive_prompt():
             print(help_text)
             continue
 
-        if response == 'exit':
+        elif response == 'exit':
             print("Goodbye!")
+
+        elif len(response.split()) == 0:
+            "You have not entered a command. Please enter a valid command"
+            continue
         
         else:
-            try:
-                print("Command IS understood")
-                result = process_command(response)
-                print(result)
-            except:
-                print("Command not understood")
-                continue
+            #try:
+            result = process_command(response)
+            #print(result)
+            #except:
+                #print("Command not understood")
+                #continue
 
 
 # Make sure nothing runs or prints out when this file is run as a module
+
 if __name__=="__main__":
     interactive_prompt()
