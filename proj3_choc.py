@@ -385,11 +385,11 @@ def regions_query(specification="", keyword="", criteria="ratings", sort="top", 
 
 def process_command(command):
     command_list = command.split() #split command into a list of words
-    #print(command_list)
+    print(command_list)
     command_query = command_list[0] #split main query from rest of command
-    #print(command_query)
+    print(command_query)
     command_params = command_list[1:] #split parameters from command
-    #print(command_params)
+    print(command_params)
 
     valid_query = True
 
@@ -408,7 +408,7 @@ def process_command(command):
         #if command_params: #search the list of params after the first command query word
 
             for param in command_params: 
-
+                print(param)
                 #set the criteria parameter if present
                 if param in ["cocoa", "ratings", "bars_sold"]:
                     params_dic["criteria"] = param
@@ -427,7 +427,8 @@ def process_command(command):
                         # top/bottom & limit
                         if word in ["top", "bottom"]:
                             params_dic["sort"] = param_equal_list[0]
-                            params_dic["limit"] = param_equal_list[1] 
+                            params_dic["limit"] = param_equal_list[1]
+                            print(param_equal_list) 
 
                         # set geographic specs
                         elif word in ["sellcountry", "sourcecountry", "sellregion", "sourceregion", "country", "region", "sellers", "sources"]:
@@ -444,8 +445,10 @@ def process_command(command):
                             else:
                                 params_dic["specification"] = param_equal_list[0].title()
 
-                        # set the second word after "=" to the keyword
-                        params_dic["keyword"] = param_equal_list[1].title()
+                            # set the second word after "=" to the keyword
+                            params_dic["keyword"] = param_equal_list[1].title()
+                        print(param_equal_list)
+                        print(params_dic)
                 else:
                     valid_query = False #if there were params, but encountered an invalid entry
 
@@ -495,14 +498,14 @@ def process_command(command):
 
         print_spacing = "{0:20} {1:20} {2:20}"
         for row in results:
-            (company, company_location, agg) = row
+            (country, region, agg) = row
 
             if params_dic["criteria"] == "ratings":
                 agg = clean_decimal_fix(agg)
             elif params_dic["criteria"] == "cocoa":
                 agg = clean_percent_fix(agg)
 
-            print(template.format(clean_str_shorten(company), clean_str_shorten(region), agg))
+            print(print_spacing.format(clean_str_shorten(country), clean_str_shorten(region), agg))
 
         return results
 
@@ -512,14 +515,14 @@ def process_command(command):
 
         print_spacing = "{0:15} {1:15}"
         for row in results:
-            (rating, agg) = row
+            (region, agg) = row
 
-            if command_dic["criteria"] == "ratings":
+            if params_dic["criteria"] == "ratings":
                 agg = clean_decimal_fix(agg)
-            elif command_dic["criteria"] == "cocoa":
+            elif params_dic["criteria"] == "cocoa":
                 agg = clean_percent_fix(agg)
 
-            print(print_spacing.format(clean_str_shorten(rating), agg))
+            print(print_spacing.format(clean_str_shorten(region), agg))
 
         return results
 
@@ -568,9 +571,9 @@ def interactive_prompt():
         elif response == 'exit':
             print("Goodbye!")
 
-        elif :
-            "You have not entered a command. Please enter a valid command"
-            continue
+        #elif:
+            #"You have not entered a command. Please enter a valid command"
+            #continue
         
         else:
             #try:
