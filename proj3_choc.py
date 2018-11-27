@@ -170,47 +170,6 @@ conn.commit()
 # Your process_command function must be able to support four main commands, along with a variety of parameters for each. The four commands are ‘bars’, ‘companies’, ‘countries’, and ‘regions.’ Each command supports parameters and provides results as detailed below.
 
 
-""" bars
-Description: Lists chocolate bars, according the specified parameters.
-Parameters:
-sellcountry=<alpha2> | sourcecountry=<alpha2> | sellregion=<name> | sourceregion=<name> [default: none]
-Description: Specifies a country or region within which to limit the results, and also specifies whether to limit by the seller (or manufacturer) or by the bean origin source.
-ratings | cocoa [default: ratings]
-Description: Specifies whether to sort by rating or cocoa percentage
-top=<limit> | bottom=<limit> [default: top=10]
-Description: Specifies whether to list the top <limit> matches or the bottom <limit> matches.
-companies
-Description: Lists chocolate bars sellers according to the specified parameters. Only companies that sell more than 4 kinds of bars are listed in results.
-Parameters:
-country=<alpha2> | region=<name> [default: none]
-Description: Specifies a country or region within which to limit the results.
-ratings | cocoa | bars_sold [default: ratings]
-Description: Specifies whether to sort by rating, cocoa percentage, or the number of different types of bars sold
-top=<limit> | bottom=<limit> [default: top=10]
-Description: Specifies whether to list the top <limit> matches or the bottom <limit> matches.
-
-countries
-Description: Lists countries according to specified parameters. Only countries that sell/source more than 4 kinds of bars are listed in results.
-Parameters:
-region=<name> [default: none]
-Description: Specifies a region within which to limit the results.
-sellers | sources [default: sellers]
-Description: Specifies whether to select countries based sellers or bean sources.
-ratings | cocoa | bars_sold [default: ratings]
-Description: Specifies whether to sort by rating, cocoa percentage, or the number of different types of bars sold
-top=<limit> | bottom=<limit> [default: top=10]
-Description: Specifies whether to list the top <limit> matches or the bottom <limit> matches.
-
-regions
-Description: Lists regions according to specified parameters. Only regions that sell/source more than 4 kinds of bars are listed in results.
-Parameters:
-sellers | sources [default: sellers]
-Description: Specifies whether to select countries based sellers or bean sources.
-ratings | cocoa | bars_sold [default: ratings]
-Description: Specifies whether to sort by rating, cocoa percentage, or the number of different types of bars sold
-top=<limit> | bottom=<limit> [default: top=10]
-Description: Specifies whether to list the top <limit> matches or the bottom <limit> matches. 
-"""
 def bars_query(specification="", keyword="", criteria="ratings", sort="top", limit="10"):
 
     conn = sqlite3.connect(DBNAME)
@@ -377,9 +336,51 @@ def countries_query(specification="", keyword="", criteria="ratings", sort="top"
     return results
 
 
-def regions_query():
+def regions_query(specification="", keyword="", criteria="ratings", sort="top", limit="10", sellers_or_sources="sellers"):
+
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
+
+    statement = "SELECT Region, "
+
+    if criteria == "ratings":
+        statement += "AVG(Rating) "
+    elif criteria == "cocoa":
+        statement += "AVG(CocoaPercent) "
+    elif criteria == "bars_sold":
+        statement += "COUNT(SpecificBeanBarName) "
+
+    statement += "FROM Countries "
+
+    if sellers_or_sources == "sellers":
+        statement += "JOIN Bars ON Countries.Id = Bars.CompanyLocationId "
+    elif sellers_or_sources == "sources":
+        statement += "JOIN Bars ON Countries.Id = Bars.BroadBeanOriginId "
+
+    statement += "GROUP BY Region "
+    statement += "HAVING COUNT(SpecificBeanBarName) > 4 "
+
+    if criteria == "ratings":
+        statement += "ORDER BY AVG(Rating) "
+    elif criteria == "cocoa":
+        statement += "ORDER BY AVG(CocoaPercent) "
+    elif criteria == "bars_sold":
+        statement += "ORDER BY COUNT(SpecificBeanBarName) "
+
+    if sort == "top":
+        statement += "DESC "
+    elif sort == "bottom":
+        statement += "ASC "
+
+    statement += "LIMIT {}".format(limit) 
+
+    results = []
+    rows = cur.execute(statement).fetchall()
+    for row in rows:
+        results.append(row)
+    conn.commit()
+
+    return results
 
 
 def process_command(command):
@@ -499,14 +500,28 @@ def process_command(command):
             if params_dic["criteria"] == "ratings":
                 agg = clean_decimal_fix(agg)
             elif params_dic["criteria"] == "cocoa":
-                agg = clean_decimal_fix(agg)
+                agg = clean_percent_fix(agg)
 
-            print(template.format(str_output(company), str_output(region), agg))
+            print(template.format(clean_str_shorten(company), clean_str_shorten(region), agg))
 
         return results
 
     elif command_query == "regions" and valid_query == True:
-        return regions_query(params_dic)
+        
+        results = regions_query(params_dic["specification"], params_dic["keyword"], params_dic["criteria"], params_dic["sort"], params_dic["limit"], params_dic["sellers_or_sources"])
+
+        print_spacing = "{0:15} {1:15}"
+        for row in results:
+            (rating, agg) = row
+
+            if command_dic["criteria"] == "ratings":
+                agg = clean_decimal_fix(agg)
+            elif command_dic["criteria"] == "cocoa":
+                agg = clean_percent_fix(agg)
+
+            print(print_spacing.format(clean_str_shorten(rating), agg))
+
+        return results
 
 #=========================================
 # ------ Results cleaning functions ------
