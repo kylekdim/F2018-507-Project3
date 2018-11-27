@@ -211,7 +211,7 @@ Description: Specifies whether to sort by rating, cocoa percentage, or the numbe
 top=<limit> | bottom=<limit> [default: top=10]
 Description: Specifies whether to list the top <limit> matches or the bottom <limit> matches. 
 """
-def bars_query(specification="", keyword="", criteria="ratings", sorting_order="top", limit="10"):
+def bars_query(specification="", keyword="", criteria="ratings", sort="top", limit="10"):
 
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
@@ -244,9 +244,9 @@ def bars_query(specification="", keyword="", criteria="ratings", sorting_order="
         statement += "ORDER BY CocoaPercent "
 
     # ORDER BY top DESC / bottom ASC
-    if sorting_order == "top":
+    if sort == "top":
         statement += "DESC "
-    elif sorting_order == "bottom":
+    elif sort == "bottom":
         statement += "ASC "
 
     # limit
@@ -262,18 +262,72 @@ def bars_query(specification="", keyword="", criteria="ratings", sorting_order="
 
     return results
 
-def companies_query():
+def companies_query(specification="", keyword="", criteria="ratings", sort="top", limit="10"):
 
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
+    
+    if criteria == "ratings":
+        statement = "SELECT Company, CompanyLocation, AVG(Rating) "
+    elif criteria == "cocoa":
+        statement = "SELECT Company, CompanyLocation, AVG(CocoaPercent) "
+    elif criteria == "bars_sold":
+        statement = "SELECT Company, CompanyLocation, COUNT(SpecificBeanBarName) "
+
+    statement += "FROM Bars "
+
+    if "c1.Alpha2" in specification:
+        statement += "JOIN Countries AS c1 ON Bars.CompanyLocationId = c1.Id "
+        statement += "GROUP BY Company "
+        statement += "HAVING COUNT(SpecificBeanBarName) > 4 "
+    elif "c2.Alpha2" in specification:
+        statement += "JOIN Countries AS c2 ON Bars.BroadBeanOriginId = c2.Id "
+        statement += "GROUP BY Company "
+        statement += "HAVING COUNT(SpecificBeanBarName) > 4 "
+    elif specification == "Alpha2" or specification == "Region":
+        statement += "JOIN Countries ON Bars.CompanyLocation = Countries.EnglishName "
+        statement += "GROUP BY Company "
+        statement += "HAVING COUNT(SpecificBeanBarName) > 4 "
+    else:
+        statement += "GROUP BY Company "
+        statement += "HAVING COUNT(SpecificBeanBarName) > 4 "
+
+    if specification != "":
+        if "Alpha2" in specification:
+            keyword = keyword.upper()
+        try:
+            statement += "AND {} = '{}' ".format(specification , keyword)
+        except:
+            print("Failure. Please try again.")
+
+    if criteria == "ratings":
+        statement += "ORDER BY AVG(Rating) "
+    elif criteria == "cocoa":
+        statement += "ORDER BY AVG(CocoaPercent) "
+    elif criteria == "bars_sold":
+        statement += "ORDER BY COUNT(SpecificBeanBarName) "
+
+    if sort == "top":
+        statement += "DESC "
+    elif sort == "bottom":
+        statement += "ASC "
+
+    statement += "LIMIT {}".format(limit)
+
+    results = []
+    rows = cur.execute(statement).fetchall()
+    for row in rows:
+        results.append(row)
+    conn.commit()
+
+    return results
 
 def countries_query():
-
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
 
-def regions_query():
 
+def regions_query():
     conn = sqlite3.connect(DBNAME)
     cur = conn.cursor()
 
@@ -300,7 +354,8 @@ def process_command(command):
 
     if command_query in ["bars", "companies", "countries", "regions"]:
 
-        if command_params: #search the list of params after the first command query word
+        #if command_params: #search the list of params after the first command query word
+
             for param in command_params: 
 
                 #set the criteria parameter if present
@@ -320,7 +375,7 @@ def process_command(command):
 
                         # top/bottom & limit
                         if word in ["top", "bottom"]:
-                            params_dic["sorting_order"] = param_equal_list[0]
+                            params_dic["sort"] = param_equal_list[0]
                             params_dic["limit"] = param_equal_list[1] 
 
                         # set geographic specs
@@ -341,7 +396,7 @@ def process_command(command):
                         # set the second word after "=" to the keyword
                         params_dic["keyword"] = param_equal_list[1].title()
                 else:
-                    valid_query = False #if there were params but encountered one, not valid
+                    valid_query = False #if there were params, but encountered an invalid entry
 
     else:
         valid_query = False #if the first word was not one of the main commands
@@ -353,21 +408,36 @@ def process_command(command):
 
 
     if command_query == "bars" and valid_query == True:
+        #print(params_dic)
         results = bars_query(params_dic["specification"], params_dic["keyword"], params_dic["criteria"], params_dic["sort"], params_dic["limit"])
                 
-        print_spacing = "{0:20} {1:20} {2:20} {3:20} {4:20} {5:20}" #using format command below, define positions and spaces added to output
+        print_spacing = "{0:15} {1:15} {2:15} {3:10} {4:10} {5:20}" #using format command below, define positions and spaces added to output
 
         for row in results:
             (specific_bean_bar_name, company, company_location, rating, cocoa_percent, broad_bean_origin) = row #create results tuple for bars
             
             #run the text through cleaning functions to properly format text
-            print(print_spacing.format(clean_str_shorten(specific_bean_bar_name), clean_str_shorten(country), clean_str_shorten(company_location), clean_decimal_fix(rating), clean_percent_fix(cocoa_percent), clean_str_shorten(broad_bean_origin)))
+            print(print_spacing.format(clean_str_shorten(specific_bean_bar_name), clean_str_shorten(company), clean_str_shorten(company_location), clean_decimal_fix(rating), clean_percent_fix(cocoa_percent), clean_str_shorten(broad_bean_origin)))
         
         return results
 
 
     elif command_query == "companies" and valid_query == True:
-        return companies_query(params_dic)
+        
+        results = companies_query(params_dic["specification"], params_dic["keyword"], params_dic["criteria"], params_dic["sort"], params_dic["limit"])
+
+        print_spacing = "{0:20} {1:20} {2:20}"
+        for row in results:
+            (company, company_location, agg) = row
+
+            if params_dic["criteria"] == "ratings":
+                agg = clean_decimal_fix(agg)
+            elif params_dic["criteria"] == "cocoa":
+                agg = clean_percent_fix(agg)
+
+            print(print_spacing.format(clean_str_shorten(company), clean_str_shorten(company_location), agg))
+
+        return results
 
     elif command_query == "countries" and valid_query == True:
         return countries_query(params_dic)
@@ -420,14 +490,14 @@ def interactive_prompt():
         elif response == 'exit':
             print("Goodbye!")
 
-        elif len(response.split()) == 0:
+        elif :
             "You have not entered a command. Please enter a valid command"
             continue
         
         else:
             #try:
             result = process_command(response)
-            print(result)
+            #print(result)
             #except:
                 #print("Command not understood")
                 #continue
