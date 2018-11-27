@@ -300,7 +300,7 @@ def process_command(command):
 
     if command_query in ["bars", "companies", "countries", "regions"]:
 
-        if command_params == True: #search the list of params after the first command query word
+        if command_params: #search the list of params after the first command query word
             for param in command_params: 
 
                 #set the criteria parameter if present
@@ -355,9 +355,13 @@ def process_command(command):
     if command_query == "bars" and valid_query == True:
         results = bars_query(params_dic["specification"], params_dic["keyword"], params_dic["criteria"], params_dic["sort"], params_dic["limit"])
                 
+        print_spacing = "{0:20} {1:20} {2:20} {3:20} {4:20} {5:20}" #using format command below, define positions and spaces added to output
+
         for row in results:
             (specific_bean_bar_name, company, company_location, rating, cocoa_percent, broad_bean_origin) = row #create results tuple for bars
-            print(row)
+            
+            #run the text through cleaning functions to properly format text
+            print(print_spacing.format(clean_str_shorten(specific_bean_bar_name), clean_str_shorten(country), clean_str_shorten(company_location), clean_decimal_fix(rating), clean_percent_fix(cocoa_percent), clean_str_shorten(broad_bean_origin)))
         
         return results
 
@@ -371,10 +375,31 @@ def process_command(command):
     elif command_query == "regions" and valid_query == True:
         return regions_query(params_dic)
 
+#=========================================
+# ------ Results cleaning functions ------
+#=========================================
+
+def clean_str_shorten(string_output):
+    if len(string_output) > 12:
+        cleaned_output = string_output[:12] + "..." # shorten all words/phrases > 12 char in spec
     else:
-        print("Invalid command.")
+        cleaned_output = string_output
+    return cleaned_output
+#=========================================
 
+def clean_percent_fix(cocoa_content):
+    cleaned_output = str(cocoa_content).replace(".0", "%") #replace decimal with percent
+    return cleaned_output
 
+#==========================================
+
+def clean_decimal_fix(choc_rating):
+    cleaned_output = "{0:.1f}".format(choc_rating, 1) #format rating to 1 decimal
+    return cleaned_output
+
+#========================================
+#--------- Included Functions -----------
+#========================================
 
 def load_help_text():
     with open('help.txt') as f:
@@ -402,7 +427,7 @@ def interactive_prompt():
         else:
             #try:
             result = process_command(response)
-            #print(result)
+            print(result)
             #except:
                 #print("Command not understood")
                 #continue
